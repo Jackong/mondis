@@ -1,5 +1,6 @@
 var hooker = require('hooker');
 var async = require('async');
+var _ = require('underscore');
 
 var Hash = function(Model, redis, prefix, ttl, methods) {
 	if (!methods || methods.length < 1) {
@@ -14,6 +15,11 @@ Hash.methods = ['create', 'update', 'remove', 'findById'];
 
 Hash.prototype.remove = function(redis, Model, prefix, ttl) {
 	hooker.hook(Model, 'remove', function(conditions, callback) {
+		if (typeof conditions._id === 'undefined') {
+			var err = new Error('key is required for mondis to remove');
+			err.conditions = conditions;
+			return hooker.preempt(callback(err));
+		}
 		return hooker.filter(this, [conditions, function(err, num, raw) {
 			if (err || num < 1) {
 				return callback(err, num);
@@ -34,7 +40,11 @@ Hash.prototype.findById = function(redis, Model, prefix, ttl) {
 					user.cached = true;
 					return callback(null, user);
 				}
-				hooker.orig(Model, 'findById').apply(Model, [id, fields, options, callback]);
+				if (!options) {
+					options = {};
+				}
+				options = _.defaults(options, {lean: true});
+				hooker.orig(Model, 'findById').apply(Model, [id, null, options, callback]);
 			},
 			function(doc, callback) {
 				if (!doc || doc.cached) {
@@ -51,13 +61,23 @@ Hash.prototype.findById = function(redis, Model, prefix, ttl) {
 					redis.expire(key, ttl, function(err, num){});
 				});
 			}
-			], callback);
+			], function(err, doc) {
+				if (!err && doc && fields) {
+					doc = _.pick(doc, fields);	
+				}
+				callback(err, doc);
+			});
 		return hooker.preempt();
 	});
 };
 
 Hash.prototype.create = function(redis, Model, prefix, ttl) {
 	hooker.hook(Model, 'create', function(obj, callback) {
+		if (typeof obj._id === 'undefined') {
+			var err = new Error('key required for mondis to create');
+			err.obj = obj;
+			return hooker.preempt(callback(err));	
+		}
 		return hooker.filter(this, [obj, function(err, doc) {
 			if (err || !doc) {
 				return callback(err, doc);
@@ -81,6 +101,11 @@ Hash.prototype.update = function(redis, Model, prefix, ttl) {
 		if ('function' === typeof options) {
 			callback = options;
 			options = null;
+		}
+		if (typeof conditions._id === 'undefined') {
+			var err = new Error('key required for mondis to update');
+			err.conditions = conditions;
+			return hooker.preempt(callback(err));
 		}
 		return hooker.filter(this, [conditions, fields, options, function(err, num, raw) {
 			if (err || num < 1) {

@@ -29,7 +29,8 @@
     "hiredis": "^0.1.17",
     "hooker": "^0.2.3",
     "mongoose": "^3.8.20",
-    "redis": "^0.12.1"
+    "redis": "^0.12.1",
+    "underscore": "^1.7.0"
   },
   "devDependencies": {
     "mocha": "^2.0.1",
