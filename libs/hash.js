@@ -1,18 +1,18 @@
 var hooker = require('hooker');
 var async = require('async');
 
-var Hash = function(Model, redis, prefix, methods) {
+var Hash = function(Model, redis, prefix, ttl, methods) {
 	if (!methods || methods.length < 1) {
 		methods = Hash.methods;
 	}
 	for (var i in methods) {
-		this[methods[i]](redis, Model, prefix);
+		this[methods[i]](redis, Model, prefix, ttl);
 	}
 };
 
 Hash.methods = ['create', 'update', 'remove', 'findById'];
 
-Hash.prototype.remove = function(redis, Model, prefix) {
+Hash.prototype.remove = function(redis, Model, prefix, ttl) {
 	hooker.hook(Model, 'remove', function(conditions, callback) {
 		return hooker.filter(this, [conditions, function(err, num, raw) {
 			if (err || num < 1) {
@@ -23,7 +23,7 @@ Hash.prototype.remove = function(redis, Model, prefix) {
 	});
 };
 
-Hash.prototype.findById = function(redis, Model, prefix) {
+Hash.prototype.findById = function(redis, Model, prefix, ttl) {
 	hooker.hook(Model, 'findById', function(id, fields, options, callback) {
 		async.waterfall([
 			function(callback) {
@@ -43,10 +43,12 @@ Hash.prototype.findById = function(redis, Model, prefix) {
 					return;
 				}
 				callback(null, doc);
-				redis.hmset(prefix + id, doc, function(err, ok) {
+				var key = prefix + id;
+				redis.hmset(key, doc, function(err, ok) {
 					if (err || ok !== 'OK') {
-						log.error('failed to sync user to redis for findById', {id: id, err: err, ok: ok});
+						return;
 					}
+					redis.expire(key, ttl, function(err, num){});
 				});
 			}
 			], callback);
@@ -54,7 +56,7 @@ Hash.prototype.findById = function(redis, Model, prefix) {
 	});
 };
 
-Hash.prototype.create = function(redis, Model, prefix) {
+Hash.prototype.create = function(redis, Model, prefix, ttl) {
 	hooker.hook(Model, 'create', function(obj, callback) {
 		return hooker.filter(this, [obj, function(err, doc) {
 			if (err || !doc) {
@@ -62,17 +64,19 @@ Hash.prototype.create = function(redis, Model, prefix) {
 			}
 			var obj = doc.toJSON();
 			delete obj.__v;
-			redis.hmset(prefix + obj._id, obj, function(err, ok) {
-				if (err || ok != 'OK') {
-					log.error('failed to set object to redis', {obj: obj, err: err, ok: ok});
+			callback(null, obj);
+			var key = prefix + obj._id;
+			redis.hmset(key, obj, function(err, ok) {
+				if (err || ok !== 'OK') {
+					return;
 				}
-				callback(null, doc);
+				redis.expire(key, ttl, function(err, num) {});
 			});
 		}]);
 	});
 };
 
-Hash.prototype.update = function(redis, Model, prefix) {
+Hash.prototype.update = function(redis, Model, prefix, ttl) {
 	hooker.hook(Model, 'update', function(conditions, fields, options, callback) {
 		if ('function' === typeof options) {
 			callback = options;
@@ -90,10 +94,12 @@ Hash.prototype.update = function(redis, Model, prefix) {
 					if (num < 1) {
 						return callback(null, 0);
 					}
-					redis.hmset(prefix + conditions._id, fields, function(err, ok) {
+					var key = prefix + conditions._id;
+					redis.hmset(key, fields, function(err, ok) {
 						if (err || ok != 'OK') {
-							log.error('failed to set user to redis', {conditions: conditions, fields: fields, err: err, ok: ok});
 							num = 0;
+						} else {
+							redis.expire(key, ttl, function(err, num) {});
 						}
 						callback(null, num);
 					});

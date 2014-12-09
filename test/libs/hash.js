@@ -4,7 +4,7 @@ var User = require('./models/user');
 var redis = require('./redis');
 var prefix = 'users:';
 var Hash = require('../../libs/hash');
-var hash = new Hash(User, redis, prefix);
+var hash = new Hash(User, redis, prefix, 86400);
 
 describe('user', function() {
 
@@ -15,7 +15,11 @@ describe('user', function() {
 		describe('with simple user', function() {
 
 			beforeEach(function(done) {
-				User.create({_id: uid}, done);
+				User.create({_id: uid}, function(err, doc) {
+					should.not.exist(err);
+					should.exist(doc);
+					setTimeout(done, 200);
+				});
 			});
 
 			afterEach(function(done) {
@@ -34,7 +38,11 @@ describe('user', function() {
 
 	describe('update', function() {
 		beforeEach(function(done) {
-			User.create({_id: uid}, done);
+			User.create({_id: uid}, function(err, doc) {
+				should.not.exist(err);
+				should.exist(doc);
+				setTimeout(done, 200);
+			});
 		});
 	
 		afterEach(function(done) {
@@ -87,7 +95,11 @@ describe('user', function() {
 	describe('findById', function() {
 
 		beforeEach(function(done) {
-			User.create({_id: uid}, done);
+			User.create({_id: uid}, function(err, doc) {
+				should.not.exist(err);
+				should.exist(doc);
+				setTimeout(done, 200);
+			});
 		});
 	
 		afterEach(function(done) {
@@ -129,7 +141,7 @@ describe('user', function() {
 						doc.should.have.property('_id', uid);
 						setTimeout(function() {
 							redis.exists(prefix + uid, callback);
-						}, 300);
+						}, 200);
 					},
 					function(num, callback) {
 						num.should.be.equal(1);
