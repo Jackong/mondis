@@ -1,6 +1,6 @@
 {
   "name": "mondis",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "mongoose and redis linker",
   "main": "index.js",
   "scripts": {
