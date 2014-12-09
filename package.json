@@ -1,0 +1,38 @@
+{
+  "name": "mondis",
+  "version": "0.0.1",
+  "description": "mongoose and redis linker",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/libs/hash.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Jackong/mondis.git"
+  },
+  "keywords": [
+    "mongoose",
+    "redis",
+    "cache",
+    "hook",
+    "middleware",
+    "linker"
+  ],
+  "author": "jackong <jackongc@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jackong/mondis/issues"
+  },
+  "homepage": "https://github.com/Jackong/mondis",
+  "dependencies": {
+    "async": "^0.9.0",
+    "hiredis": "^0.1.17",
+    "hooker": "^0.2.3",
+    "mongoose": "^3.8.20",
+    "redis": "^0.12.1"
+  },
+  "devDependencies": {
+    "mocha": "^2.0.1",
+    "should": "^4.3.1"
+  }
+}
