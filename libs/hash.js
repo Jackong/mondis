@@ -7,13 +7,13 @@ var Hash = function(Model, redis, prefix, ttl, methods) {
 		methods = Hash.methods;
 	}
 	for (var i in methods) {
-		this[methods[i]](redis, Model, prefix, ttl);
+		Hash[methods[i]](redis, Model, prefix, ttl);
 	}
 };
 
 Hash.methods = ['create', 'update', 'remove', 'findById'];
 
-Hash.prototype.remove = function(redis, Model, prefix, ttl) {
+Hash.remove = function(redis, Model, prefix, ttl) {
 	hooker.hook(Model, 'remove', function(conditions, callback) {
 		if (typeof conditions._id === 'undefined') {
 			var err = new Error('key is required for mondis to remove');
@@ -29,7 +29,7 @@ Hash.prototype.remove = function(redis, Model, prefix, ttl) {
 	});
 };
 
-Hash.prototype.findById = function(redis, Model, prefix, ttl) {
+Hash.findById = function(redis, Model, prefix, ttl) {
 	hooker.hook(Model, 'findById', function(id, fields, options, callback) {
 		async.waterfall([
 			function(callback) {
@@ -71,7 +71,7 @@ Hash.prototype.findById = function(redis, Model, prefix, ttl) {
 	});
 };
 
-Hash.prototype.create = function(redis, Model, prefix, ttl) {
+Hash.create = function(redis, Model, prefix, ttl) {
 	hooker.hook(Model, 'create', function(obj, callback) {
 		if (typeof obj._id === 'undefined') {
 			var err = new Error('key required for mondis to create');
@@ -96,7 +96,7 @@ Hash.prototype.create = function(redis, Model, prefix, ttl) {
 	});
 };
 
-Hash.prototype.update = function(redis, Model, prefix, ttl) {
+Hash.update = function(redis, Model, prefix, ttl) {
 	hooker.hook(Model, 'update', function(conditions, fields, options, callback) {
 		if ('function' === typeof options) {
 			callback = options;

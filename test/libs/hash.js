@@ -3,8 +3,7 @@ var async = require('async');
 var User = require('./models/user');
 var redis = require('./redis');
 var prefix = 'users:';
-var Hash = require('../../libs/hash');
-var hash = new Hash(User, redis, prefix, 86400);
+require('../../libs/hash')(User, redis, prefix, 86400);
 
 describe('user', function() {
 
