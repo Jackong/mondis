@@ -1,8 +1,9 @@
 # mondis
 
-标签（空格分隔）： npm usage library
-
 ---
+
+## WHAT
+* We just make redis-mongoose more simple.
 
 ## WHY 
 * Why this name?
@@ -13,9 +14,6 @@
 1. We need read from redis first and write to redis last when you are using mongo and redis. Another words, we wrap DB with cache.
 2. We don't want to change exist caller and callee for DB, intrusive mood is confused and coupled.
 3. So, we use [hooker][1] to decouple it and provide some structs for you.
-
-## WHAT
-* We just make redis-mongoose more simple.
 
 ## HOW
 * `hash`
