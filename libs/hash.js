@@ -39,7 +39,8 @@ Hash.findById = function(redis, Model, prefix, ttl) {
 			},
 			function(obj, cb) {
 				if (obj) {
-					return callback(null, obj);
+					obj.cached = true;
+					return cb(null, obj);
 				}
 				if (!options) {
 					options = {};
@@ -50,6 +51,10 @@ Hash.findById = function(redis, Model, prefix, ttl) {
 			function(doc, callback) {
 				if (!doc) {
 					return callback(new Error('doc is not found from DB'));
+				}
+				if (doc.cached) {
+					delete doc.cached;
+					return callback(null, doc);
 				}
 				callback(null, doc);
 				redis.hmset(key, doc, function(err, ok) {
