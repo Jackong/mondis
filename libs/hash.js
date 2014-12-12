@@ -35,23 +35,17 @@ Hash.findById = function(redis, Model, prefix, ttl) {
 			function(callback) {
 				redis.hgetall(prefix + id, callback);
 			},
-			function(user, callback) {
+			function(user, cb) {
 				if (user) {
-					user.cached = true;
 					return callback(null, user);
 				}
 				if (!options) {
 					options = {};
 				}
 				options = _.defaults(options, {lean: true});
-				hooker.orig(Model, 'findById').apply(Model, [id, null, options, callback]);
+				hooker.orig(Model, 'findById').apply(Model, [id, null, options, cb]);
 			},
 			function(doc, callback) {
-				if (!doc || doc.cached) {
-					delete doc.cached;
-					callback(null, doc);
-					return;
-				}
 				callback(null, doc);
 				var key = prefix + id;
 				redis.hmset(key, doc, function(err, ok) {
