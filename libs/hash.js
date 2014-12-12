@@ -1,6 +1,7 @@
 var hooker = require('hooker');
 var async = require('async');
 var _ = require('underscore');
+var debug = require('debug')('mondis');
 
 var Hash = function(Model, redis, prefix, ttl, methods) {
 	if (!methods || methods.length < 1) {
@@ -31,13 +32,14 @@ Hash.remove = function(redis, Model, prefix, ttl) {
 
 Hash.findById = function(redis, Model, prefix, ttl) {
 	hooker.hook(Model, 'findById', function(id, fields, options, callback) {
+		var key = prefix + id;
 		async.waterfall([
 			function(callback) {
-				redis.hgetall(prefix + id, callback);
+				redis.hgetall(key, callback);
 			},
-			function(user, cb) {
-				if (user) {
-					return callback(null, user);
+			function(obj, cb) {
+				if (obj) {
+					return callback(null, obj);
 				}
 				if (!options) {
 					options = {};
@@ -46,8 +48,10 @@ Hash.findById = function(redis, Model, prefix, ttl) {
 				hooker.orig(Model, 'findById').apply(Model, [id, null, options, cb]);
 			},
 			function(doc, callback) {
+				if (!doc) {
+					return callback(new Error('doc is not found from DB'));
+				}
 				callback(null, doc);
-				var key = prefix + id;
 				redis.hmset(key, doc, function(err, ok) {
 					if (err || ok !== 'OK') {
 						return;
