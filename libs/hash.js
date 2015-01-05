@@ -120,7 +120,7 @@ Hash.update = function(redis, Model, prefix, ttl) {
 				},
 				function(num, callback) {	
 					if (num < 1) {
-						return callback(null, 0);
+						return callback(null, 1);
 					}
 					var key = prefix + conditions._id;
 					redis.hmset(key, fields, function(err, ok) {
